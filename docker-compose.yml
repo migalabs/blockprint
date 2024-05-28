@@ -14,9 +14,11 @@ services:
       - BN_URL=${BN_URL:-localhost:5052}
       - GUNICORN_CMD_ARGS="--bind=0.0.0.0"
       - PYTHONUNBUFFERED=1
+#      - MODEL_PATH=/app/classifier.pkl
     volumes:
       - ${DATA_DIR:-./training_data}:/app/data/mainnet/training
       - ${BLOCK_DB:-./block_db.sqlite}:/app/block_db.sqlite
+#      - ./example.pkl:/app/classifier.pkl
     networks:
       - bp_cluster
     entrypoint: ["gunicorn", "--timeout", "1800", "api_server:app"]                
