@@ -1,0 +1,84 @@
+networks:
+  bp_cluster:
+
+services:
+  bp:
+    profiles:
+      - ""
+      - "server"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - BLOCK_DB=/app/block_db.sqlite
+      - BN_URL=${BN_URL:-localhost:5052}
+      - GUNICORN_CMD_ARGS="--bind=0.0.0.0"
+      - PYTHONUNBUFFERED=1
+#      - MODEL_PATH=/app/classifier.pkl
+    volumes:
+      - ${DATA_DIR:-./training_data}:/app/data/mainnet/training
+      - ${BLOCK_DB:-./block_db.sqlite}:/app/block_db.sqlite
+#      - ./example.pkl:/app/classifier.pkl
+    networks:
+      - bp_cluster
+    entrypoint: ["gunicorn", "--timeout", "1800", "api_server:app"]                
+  bp-bg:
+    profiles:
+      - ""
+      - "server"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - bp_cluster
+    environment:
+      - PYTHONUNBUFFERED=1
+      - BN_URL=${BN_URL:-http://localhost:5052}
+      - BP_URL=http://bp:8000
+    entrypoint: ["./background_tasks.py"]
+  
+  blockgauge:
+    profiles:
+      - ""
+      - "server"
+    image: ghcr.io/blockprint-collective/blockgauge
+    command: >-
+      blockgauge
+      --lighthouse-url ${BN_URL:-localhost:5052} 
+      --blockprint-url http://bp:8000
+      --listen-address 0.0.0.0  
+    networks:
+      - bp_cluster
+  
+  blockdreamer:
+    profiles:
+      - "dreamer"
+    image: ghcr.io/blockprint-collective/blockdreamer
+    volumes:
+      - ./dreamer:/mnt/dreamer
+    working_dir: "/mnt/dreamer"
+    command: >-
+      blockdreamer 
+      --config /mnt/dreamer/config.toml
+  
+  caddy:
+    profiles:
+      - ""
+      - "server"
+    image: caddy:2.7.5
+    ports:
+    - "${PROXY_PORT:-80}:80"
+    - "443:443"
+    volumes:
+    - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    - ./data/caddy/data:/data
+    - ./data/caddy/config:/config
+    - ./certs:/certs
+    restart: unless-stopped
+    networks:
+      - bp_cluster
+
+                
+
+        
+        
