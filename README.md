@@ -36,11 +36,16 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-### k-NN Classifier
+### The Classifier
 
-Blockprint's classifier is a k-nearest neighbours classifier in `knn_classifier.py`.
+Blockprint's classifier utilizes one of two machine learning algorithms:
 
-See `./knn_classifier.py --help` for command line options including cross
+- K-nearest neighbours
+- Multi-layer Perceptron
+
+These can be chosen with the `--classifier-type` flag in `classifier.py`.
+
+See `./classifier.py --help` for more command line options including cross
 validation (CV) and manual classification.
 
 ### Training the Classifier
@@ -81,10 +86,10 @@ testdata_proc
     └── 0x7fedb0da9699c93ce66966555c6719e1159ae7b3220c7053a08c8f50e2f3f56f.json
 ```
 
-You can then use this directory as the datadir argument to `./knn_classifier.py`:
+You can then use this directory as the datadir argument to `./classifier.py`:
 
 ```
-./knn_classifier.py testdata_proc --classify testdata
+./classifier.py testdata_proc --classify testdata
 ```
 
 If you then want to use the classifier to build an sqlite database:
@@ -101,3 +106,19 @@ gunicorn api_server:app --timeout 1800
 ```
 
 It will take a few minutes to start-up while it loads all of the training data into memory.
+
+### License
+
+Copyright 2021 Sigma Prime and blockprint contributors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

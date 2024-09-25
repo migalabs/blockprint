@@ -4,7 +4,7 @@ import os
 import json
 import sqlite3
 import argparse
-from .knn_classifier import Classifier
+from .classifier import Classifier
 from .multi_classifier import MultiClassifier
 from .prepare_training_data import CLIENTS
 
@@ -31,6 +31,7 @@ def create_block_db(db_path):
             proposer_index INT,
             best_guess_single TEXT,
             best_guess_multi TEXT,
+            pr_grandine FLOAT DEFAULT 0.0,
             pr_lighthouse FLOAT,
             pr_lodestar FLOAT,
             pr_nimbus FLOAT,
@@ -126,9 +127,9 @@ def insert_block(
 
     conn.execute(
         """INSERT INTO blocks (slot, parent_slot, proposer_index, best_guess_single,
-                               best_guess_multi, pr_lighthouse, pr_lodestar, pr_nimbus,
-                               pr_prysm, pr_teku, graffiti_guess)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                               best_guess_multi, pr_grandine, pr_lighthouse, pr_lodestar,
+                               pr_nimbus, pr_prysm, pr_teku, graffiti_guess)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             slot,
             parent_slot,
@@ -177,7 +178,7 @@ def get_sync_gaps(block_db):
     missing_parent_slots = get_missing_parent_blocks(block_db)
     gaps = []
 
-    for (block_slot, parent_slot) in missing_parent_slots:
+    for block_slot, parent_slot in missing_parent_slots:
         prior_slot = get_greatest_prior_block_slot(block_db, parent_slot)
 
         if prior_slot is None:
@@ -220,7 +221,7 @@ def get_blocks_per_client(block_db, start_slot, end_slot):
         (start_slot, end_slot),
     )
 
-    for (client, count) in client_counts:
+    for client, count in client_counts:
         blocks_per_client[client] = int(count)
 
     return blocks_per_client
@@ -229,8 +230,8 @@ def get_blocks_per_client(block_db, start_slot, end_slot):
 def get_validator_blocks(block_db, validator_index, since_slot=None):
     since_slot = since_slot or 0
     rows = block_db.execute(
-        """SELECT slot, best_guess_single, best_guess_multi, pr_lighthouse, pr_lodestar,
-                  pr_nimbus, pr_prysm, pr_teku
+        """SELECT slot, best_guess_single, best_guess_multi, pr_grandine, pr_lighthouse,
+                  pr_lodestar, pr_nimbus, pr_prysm, pr_teku
            FROM blocks WHERE proposer_index = ? AND slot >= ?""",
         (validator_index, since_slot),
     )
@@ -277,8 +278,8 @@ def get_blocks(block_db, start_slot, end_slot=None):
     end_slot = end_slot or (1 << 62)
 
     rows = block_db.execute(
-        """SELECT slot, proposer_index, best_guess_single, best_guess_multi, pr_lighthouse,
-           pr_lodestar, pr_nimbus, pr_prysm, pr_teku
+        """SELECT slot, proposer_index, best_guess_single, best_guess_multi, pr_grandine,
+           pr_lighthouse, pr_lodestar, pr_nimbus, pr_prysm, pr_teku
            FROM blocks WHERE slot >= ? AND slot < ?""",
         (start_slot, end_slot),
     )
@@ -369,7 +370,7 @@ def main():
     if args.multi_classifier:
         classifier = MultiClassifier(data_dir)
     else:
-        print("loading single KNN classifier")
+        print("loading single classifier")
         classifier = Classifier(data_dir)
         print("loaded")
 

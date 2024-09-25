@@ -5,7 +5,7 @@ import csv
 import sqlite3
 import requests
 import statistics
-from knn_classifier import compute_best_guess
+from classifier import compute_best_guess
 from prepare_training_data import CLIENTS
 from build_db import block_row_to_obj
 
@@ -316,7 +316,7 @@ def get_validators_per_client(period_db, period_id, guess_column=DEFAULT_GUESS):
         (period_id,),
     )
 
-    for (client, count) in client_counts:
+    for client, count in client_counts:
         validators_per_client[client] = int(count)
 
     return validators_per_client
@@ -339,7 +339,7 @@ def period_db_to_csv(period_db, output_file, guess_column=DEFAULT_GUESS):
 
     periods = period_db.execute("SELECT * FROM periods")
 
-    for (period_id, end_slot, num_active_validators) in periods:
+    for period_id, end_slot, num_active_validators in periods:
         row = {
             "period_id": period_id,
             "end_slot": end_slot,
