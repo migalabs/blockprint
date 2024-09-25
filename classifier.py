@@ -301,6 +301,17 @@ def import_classifier(model_path: str) -> Classifier:
         print(f"Failed to import classifier due to {e}")
 
 
+def import_classifier(model_path: str) -> Classifier:
+    """Load a pickled classifier.
+
+    This function may throw an exception if the data is corrupt or the file does not exist.
+    """
+    print(f"""Loading classifier from {model_path}""")
+    classifier = pickle.load(open(model_path, "rb"))
+    print("Loaded classifier into memory")
+    return classifier
+
+
 def main():
     args = parse_args()
     data_dir = args.data_dir
